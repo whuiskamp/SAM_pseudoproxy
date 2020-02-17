@@ -222,29 +222,5 @@ for region = 1:5
             
             
         clear norm_sat_PC norm_pre_PC pre_EOFs sat_EOFs std_sat_PC std_pre_PC sat_detr_2 pre_detr_2
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         end
 end        

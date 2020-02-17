@@ -1,0 +1,25 @@
+# Don't track content of these folders
+figures/
+Matlab_functions/
+prox_groups/
+
+
+# Don't track image files
+*.png
+*.eps
+*.pdf
+*.svg
+*.ps
+
+# Don't track archives, spreadsheets, docs and data
+*.zip
+*.xls
+*.mat
+*.csv
+*.xlsx
+*.nc
+*.doc
+*.odt
+*.tex
+*.pbs
+*.docx
