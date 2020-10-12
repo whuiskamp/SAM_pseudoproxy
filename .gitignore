@@ -2,7 +2,7 @@
 figures/
 Matlab_functions/
 prox_groups/
-
+archived_scripts
 
 # Don't track image files
 *.png

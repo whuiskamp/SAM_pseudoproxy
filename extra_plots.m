@@ -1,5 +1,5 @@
 %% Setup
-
+clear
 load DataFiles/model_output.mat
 
 windowsize = 31; % The running window in years
@@ -11,68 +11,45 @@ P_precip = zeros(45,size(precip_detr,3));
 
 for i=1:45
     for j=1:size(sat_detr,3)
-        [corr_sat(i,j) P_sat(i,j)]= corr(SAM',sat_detr(:,i,j));
+        corr_sat(i,j) = corr(SAM',sat_detr(:,i,j));
     end
 end
 
-corr_precip = zeros(size(45),size(precip_detr,3));
 for i=1:45
     for j=1:size(precip_detr,3)
         corr_precip(i,j) = corr(SAM',precip_detr(:,i,j));
     end
 end
 
-NUM_YRS=500; NUM_TRIALS=1000; numstnstocompare=2:70;
-
-
 %% Figure 1-1
-load(['DataFiles/runcorr31yrwdw.mat'])
-load(['DataFiles/nonstat_map_31yrwdw.mat'])
-precip_runcorr_91 = load('DataFiles/runcorr91yrwdw.mat','precip_runcorr');
-precip_runcorr_91 = precip_runcorr_91.('precip_runcorr');
-sat_runcorr_91 = load('DataFiles/runcorr91yrwdw.mat','sat_runcorr');
-sat_runcorr_91 = sat_runcorr_91.('sat_runcorr');
-load(['DataFiles/nonstat_map_91yrwdw.mat'])
+load(['DataFiles/runcorr',num2str(windowsize),'yrwdw.mat']);
+%load(['DataFiles/nonstat_map_31yrwdw.mat'])
+%load(['DataFiles/nonstat_map_91yrwdw.mat'])
 
 % Temp
 bin = -1.0:0.03:1.0;
-[sorted_corr sorted_corr_ind] = sort(corr_sat(:));
+[sorted_corr, sorted_corr_ind] = sort(corr_sat(:));
 sat_runcorr = sat_runcorr(:,1:45,:);
-sat_runcorr_91 = sat_runcorr_91(:,1:45,:);
-sorted_sat_runcorr = sat_runcorr(:,sorted_corr_ind); % This will need to be checked
-sorted_sat_runcorr_91 = sat_runcorr_91(:,sorted_corr_ind);
+sorted_sat_runcorr = sat_runcorr_31(:,sorted_corr_ind); 
 bin_sizes = histc(squeeze(sorted_corr),bin);
-current_index = 1; sat_runcorr_quan = nan(7,length(bin_sizes)); 
+
+current_index = 1; sat_runcorr_quan = nan(7,length(bin_sizes));
 for m=1:length(bin_sizes)
     sat_runcorr_quan(:,m) = quantile(reshape(sorted_sat_runcorr(:,current_index:(current_index-1+bin_sizes(m))),[],1), ...
                  [0.01,0.05,0.25,0.5,0.75,0.95,0.99]);
     current_index = current_index + bin_sizes(m);
 end
-current_index = 1; sat_runcorr_91_quan = nan(7,length(bin_sizes));
-for m=1:length(bin_sizes)
-    sat_runcorr_91_quan(:,m) = quantile(reshape(sorted_sat_runcorr_91(:,current_index:(current_index-1+bin_sizes(m))),[],1), ...
-                 [0.01,0.05,0.25,0.5,0.75,0.95,0.99]);
-    current_index = current_index + bin_sizes(m);
-end
-
 
 % Precip
 
-[sorted_corr_p sorted_corr_ind_p] = sort(corr_precip(:));
+[sorted_corr_p, sorted_corr_ind_p] = sort(corr_precip(:));
 precip_runcorr = precip_runcorr(:,1:45,:);
-precip_runcorr_91 = precip_runcorr_91(:,1:45,:);
-sorted_precip_runcorr = precip_runcorr(:,sorted_corr_ind_p); % This will need to be checked
-sorted_precip_runcorr_91 = precip_runcorr_91(:,sorted_corr_ind_p);
+sorted_precip_runcorr = precip_runcorr(:,sorted_corr_ind_p);
 bin_sizes_p = histc(squeeze(sorted_corr_p),bin);
+
 current_index = 1; precip_runcorr_quan = nan(7,length(bin_sizes_p));
 for m=1:length(bin_sizes_p)
     precip_runcorr_quan(:,m) = quantile(reshape(sorted_precip_runcorr(:,current_index:(current_index-1+bin_sizes(m))),[],1), ...
-                 [0.01,0.05,0.25,0.5,0.75,0.95,0.99]);
-    current_index = current_index + bin_sizes_p(m);
-end
-current_index = 1; precip_runcorr_quan_91 = nan(7,length(bin_sizes_p));
-for m=1:length(bin_sizes_p)
-    precip_runcorr_quan_91(:,m) = quantile(reshape(sorted_precip_runcorr_91(:,current_index:(current_index-1+bin_sizes(m))),[],1), ...
                  [0.01,0.05,0.25,0.5,0.75,0.95,0.99]);
     current_index = current_index + bin_sizes_p(m);
 end
@@ -82,7 +59,7 @@ end
 figure(1)
 hold on; Hnd = nan(1,7);
 for n=1:7
-    HA(n) = plot(bin,sat_runcorr_quan(n,:));
+    HA(n) = plot(bin,sat_runcorr_quan(n,:));  % repeat for other two windows
     set(HA(n),'Color','k','LineWidth',3);
 end
 plot([-0.3,-0.3],[-1 1],'k','LineWidth',2); plot([0.3,0.3],[-1 1],'k','LineWidth',2)
@@ -98,7 +75,7 @@ set(text(0.15,0.07,'0.25'),'FontSize',15,'Rotation',45,'Margin',0.1,'BackgroundC
 set(text(0,-0.28,'0.05'),'FontSize',15,'Rotation',45,'Margin',0.1,'BackgroundColor',[1 1 1],'HorizontalAlignment','center')
 set(text(0.26,0.76,'0.99'),'FontSize',15,'Rotation',35,'Margin',0.1,'BackgroundColor',[1 1 1],'HorizontalAlignment','center')
 set(text(0.31,-0.33,'0.01'),'FontSize',15,'Rotation',45,'Margin',0.1,'BackgroundColor',[1 1 1],'HorizontalAlignment','center')
-ylabel(['r(',num2str(windowsize),'yr)'],'FontSize',16);
+ylabel(['r(',num2str(windowsize),'yr)'],'FontSize',16); % Change windowsize when doing each figure
 xlabel('r(500yr)','FontSize',16);
 title(['Percentiles'],'FontSize',16,'FontWeight','bold')
 set(gca, ...
@@ -120,13 +97,13 @@ set(gca, ...
 set(gcf, 'PaperUnits', 'centimeters');
 set(gcf, 'PaperSize', [19 19]);
 set(gcf, 'PaperPosition', [0 0 19 19]); %x_width=19cm y_width=28cm
-text(-1+0.08,1-0.18,'a)','FontSize',22,'FontWeight','bold');
+text(-1+0.08,1-0.18,'(a)','FontSize',22,'FontWeight','bold');
 
 figure(2)
 
 hold on; Hnd = nan(1,7);
 for n=1:7
-    HA(n) = plot(bin,precip_runcorr_quan(n,:));
+    HA(n) = plot(bin,precip_runcorr_quan(n,:)); % Repeat for other two windows
     set(HA(n),'Color','k','LineWidth',3);
 end
 plot([-0.3,-0.3],[-1 1],'k','LineWidth',2); plot([0.3,0.3],[-1 1],'k','LineWidth',2)

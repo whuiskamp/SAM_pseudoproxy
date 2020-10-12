@@ -17,14 +17,14 @@ clear
 %% Setup
 tic;
 load DataFiles/model_output.mat
+load site_range.mat
 
-for windowsize = [31 61 91]; % The running window in years
-    for region = 1:6
+for windowsize = [31] % The running window in years
+    for region = [1]
 %% Loading proxies
-    DIR_NAME = ['Proxies/NoSkill/',num2str(windowsize),'yrWindow'];
+    DIR_NAME = ['Proxies/NoResample/',num2str(windowsize),'yrWindow'];
      % script fails at 1, it is noted in the script what to change if you only want one site
     NUM_YRS = 500; NUM_TRIALS = 1000;
-    numstnstocompare = 2:70;
     % Calibration windows set to being 10 overlapping windows over 500 years
     NUM_CAL_WDW = 10; clear CAL_WDW;
     overlap = ceil(-(NUM_YRS-NUM_CAL_WDW*windowsize)/9.0);
@@ -34,10 +34,14 @@ for windowsize = [31 61 91]; % The running window in years
 
 %% Beginning the Loop - extracting the pseudoproxies from the precip file
 		for c= 1:size(CAL_WDW,1)
-            for NUM_STNS = numstnstocompare
+            numstnstocompare = 2:precip_min(floor(windowsize/30),region);
+            if max(numstnstocompare) > 70
+                numstnstocompare = 2:70;
+            end
+			for NUM_STNS = numstnstocompare
 
 				all_stn_precip=zeros(NUM_TRIALS,NUM_STNS,NUM_YRS);
-                load([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat']);
+                load([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat']);
             
 % Select region for analysis: 1 = Global (SH really), 2 = South America only, 3 = Australia + New Zealand, 4 = SH without Antarctica
 % 5 = Antarctica only, 6 = South Africa only
@@ -103,7 +107,11 @@ for windowsize = [31 61 91]; % The running window in years
 				all_stn_rmse_CPS(NUM_STNS,:) = stn_rmse_CPS;
             end
             
-            for NUM_STNS = numstnstocompare
+            numstnstocompare = 2:sat_min(floor(windowsize/30),region);
+            if max(numstnstocompare) > 70
+                numstnstocompare = 2:70;
+            end
+			for NUM_STNS = numstnstocompare
                 all_stn_sat=zeros(NUM_TRIALS,NUM_STNS,NUM_YRS);
 				load([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat']);
             

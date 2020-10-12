@@ -1,0 +1,153 @@
+! Plotting calibration window correlations for Precipitation and SAT - 31 year window.
+
+use corr
+se wi 1
+go portraitNxN 5 4 60 40
+
+se view 1
+ppl axlsze,0,0.1
+ppl tics,0,0,0,0,-1,-1
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw1
+go land
+PPL SHASET RESET
+se view 2
+ppl axlsze,0,0
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw2
+go land
+PPL SHASET RESET
+se view 3
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw3
+go land
+PPL SHASET RESET
+se view 4
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw4
+go land
+PPL SHASET RESET
+se view 5
+fill/nolab/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw5
+go land
+PPL SHASET RESET
+se view 6
+ppl axlsze,0,0.1
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw6
+go land
+PPL SHASET RESET
+se view 7
+ppl axlsze,0,0
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw7
+go land
+PPL SHASET RESET
+se view 8
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw8
+go land
+PPL SHASET RESET
+se view 9
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw9
+go land
+PPL SHASET RESET
+se view 10
+fill/nolab/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw10
+go land
+PPL SHASET RESET
+
+se view 11
+ppl axlsze,0,0.1
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw1
+go land
+PPL SHASET RESET
+se view 12
+ppl axlsze,0,0
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw2
+go land
+PPL SHASET RESET
+se view 13
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw3
+go land
+PPL SHASET RESET
+se view 14
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw4
+go land
+PPL SHASET RESET
+se view 15
+fill/nolab/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw5
+go land
+PPL SHASET RESET
+se view 16
+ppl axlsze,0.1,0.1
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw6
+go land
+PPL SHASET RESET
+se view 17
+ppl axlsze,0.1,0
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw7
+go land
+PPL SHASET RESET
+se view 18
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw8
+go land
+PPL SHASET RESET
+se view 19
+fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw9
+go land
+PPL SHASET RESET
+se view 20
+fill/nolab/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw10
+go land
+PPL SHASET RESET
+
+!se wi 2
+
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw1
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw2
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw3
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw4
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw5
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw6
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw7
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw8
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw9
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_sat_wdw10
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw1
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw2
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw3
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw4
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw5
+!go land
+!ill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw6
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw7
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw8
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw9
+!go land
+!fill/nolab/nokey/palette=blue_darkred/levels=(-1,1,0.01) corr_precip_wdw10
+!go land
+
+
+
+
+
+
+
+
+
+
+
+
+
+
