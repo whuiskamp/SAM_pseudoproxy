@@ -1,7 +1,8 @@
-% Script to generate pseudoproxy groups
+% Script to generate pseudoproxy groups that exclude sites with a 
+% significant correlation with ENSO
 % Willem Huiskamp, 2015
 %
-% Method roughly follows that of Ryan Batehup (Honours Thesis).
+% Method roughly follows that of Batehup et al. 2015.
 % Proxies are only selected from land tiles and must have an absolute
 % correlation with SAM greater than 0.3 over a calibration window
 % (or over the entire time series). We then generate a network of proxies
@@ -14,8 +15,9 @@ clear
 % load land mask and setup new variables
 land = ncread('sftlf_A1.static.nc','sftlf');
 load('DataFiles/model_output','precip_detr','sat_detr','SAM')
-load('site_range','precip_min','sat_min')
-
+load('site_range_ENSO','precip_min','sat_min')
+load('DataFiles/ENSO_corrs.mat','SAT_corr_sig','pre_corr_sig')
+land = land';
 % Next we need to create 10 evenly spaced calibration windows in the data,
 % of the length of our correlation windows.
 
@@ -36,55 +38,55 @@ for windowsize = [31 61 91]
      
 % Load topography and eliminate all data that isn't land. This will save time with the correlations.
 
-  for t = 1:500
-    for i = 1:size(land,1)
-      for j = 1:size(land,2)
-        if land(i,j) > 0 
-               precip_land(:,j,i) = precip_detr(:,j,i);
-          else precip_land(:,j,i) = NaN;
-        end
-      end
-    end
-  end 
   
-  for t = 1:500
-    for i = 1:size(land,1)
-      for j = 1:size(land,2)
+    for i = 1:45
+      for j = 1:144
         if land(i,j) > 0 
-               sat_land(:,j,i) = sat_detr(:,j,i);
-          else sat_land(:,j,i) = NaN;
+               precip_land(:,i,j) = precip_detr(:,i,j);
+          else precip_land(:,i,j) = NaN;
         end
       end
     end
-  end 
+  
+  
+  
+    for i = 1:45
+      for j = 1:144
+        if land(i,j) > 0 
+               sat_land(:,i,j) = sat_detr(:,i,j);
+          else sat_land(:,i,j) = NaN;
+        end
+      end
+    end
+  
   
 % Calculate correlations 
 
   for c = 1:10
-    for i = 1:90
+    for i = 1:45
         for j = 1:144
             corr_precip(i,j) = corr(SAM(CAL_WDW(c,:)), precip_land(CAL_WDW(c,:),i,j));
             corr_sat(i,j) = corr(SAM(CAL_WDW(c,:)), sat_land(CAL_WDW(c,:),i,j));
         end
     end
-    mkdir(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end))]);
+    mkdir(['Proxies/NoENSO/',num2str(windowsize),'yrWindow/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end))]);
 
 
     % Mask correlations so we only have land values and correlations greater
     % than or equal to +-0.3
 
-    for i = 1:size(land,1)
-        for j = 1:size(land,2)
-            if abs(corr_precip(j,i)) < 0.3
-            corr_precip(j,i) = NaN;
+    for i = 1:45
+        for j = 1:144
+            if abs(corr_precip(i,j)) < 0.3 && isnan(pre_corr_sig(floor(windowsize/30),i,j))
+                corr_precip(i,j) = NaN;
             end
         end
     end
     
-    for i = 1:size(land,1)
-        for j = 1:size(land,2)
-            if abs(corr_sat(j,i)) < 0.3
-            corr_sat(j,i) = NaN;
+    for i = 1:45
+        for j = 1:144
+            if abs(corr_sat(i,j)) < 0.3 && isnan(SAT_corr_sig(floor(windowsize/30),i,j))
+                corr_sat(i,j) = NaN;
             end
         end
     end
@@ -121,7 +123,7 @@ for windowsize = [31 61 91]
                         sat_lon(m,:) = J_sat(idx);
                     end
 				
-                    save(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
+                    save(['Proxies/NoENSO/',num2str(windowsize),'yrWindow/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
                         'stn_lat','stn_lon','I','J','corr_precip','sat_lat','sat_lon','I_sat','J_sat','corr_sat','windowsize');
                 end
             elseif region == 2
@@ -135,7 +137,7 @@ for windowsize = [31 61 91]
                         [stn_lat_SA(m,:),idx] = datasample(I_SA,NUM_STNS,'Replace',false);
                         stn_lon_SA(m,:) = J_SA(idx);
                     end
-                    save(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
+                    save(['Proxies/NoENSO/',num2str(windowsize),'yrWindow/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
                        'stn_lat_SA','stn_lon_SA','I_SA','J_SA','-append');
                 end
                 for NUM_STNS = 1:sat_min(floor(windowsize/30),2)
@@ -145,7 +147,7 @@ for windowsize = [31 61 91]
                         [sat_lat_SA(m,:),idx] = datasample(I_sat_SA,NUM_STNS,'Replace',false);
                         sat_lon_SA(m,:) = J_sat_SA(idx);
                     end
-                    save(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
+                    save(['Proxies/NoENSO/',num2str(windowsize),'yrWindow/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
                        'sat_lat_SA','sat_lon_SA','I_sat_SA','J_sat_SA','-append');
                 end                                
 			elseif region == 3
@@ -158,7 +160,7 @@ for windowsize = [31 61 91]
                         [stn_lat_AuNz(m,:),idx] = datasample(I_Au,NUM_STNS,'Replace',false);
                         stn_lon_AuNz(m,:) = J_Au(idx);
                     end
-                    save(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
+                    save(['Proxies/NoENSO/',num2str(windowsize),'yrWindow/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
                         'stn_lat_AuNz','stn_lon_AuNz','I_Au','J_Au','-append');
                 end
                 
@@ -168,7 +170,7 @@ for windowsize = [31 61 91]
                         [sat_lat_AuNz(m,:),idx] = datasample(I_sat_Au,NUM_STNS,'Replace',false);
                         sat_lon_AuNz(m,:) = J_sat_Au(idx);
                     end
-                    save(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
+                    save(['Proxies/NoENSO/',num2str(windowsize),'yrWindow/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
                         'sat_lat_AuNz','sat_lon_AuNz','I_sat_Au','J_sat_Au','-append');
                 end
 			elseif region == 4
@@ -187,7 +189,7 @@ for windowsize = [31 61 91]
                         sat_lon_noAA(m,:) = J_sat_AA(idx);
                     end
 	
-                    save(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
+                    save(['Proxies/NoENSO/',num2str(windowsize),'yrWindow/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
                         'stn_lat_noAA','stn_lon_noAA','I_AA','J_AA','sat_lat_noAA','sat_lon_noAA','I_sat_AA','J_sat_AA','-append');
                 end
             elseif region == 5
@@ -206,7 +208,7 @@ for windowsize = [31 61 91]
                         [sat_lat_AAo(m,:),idx] = datasample(I_sat_AAo,NUM_STNS,'Replace',false);
                         sat_lon_AAo(m,:) = J_sat_AAo(idx);
                     end
-                    save(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
+                    save(['Proxies/NoENSO/',num2str(windowsize),'yrWindow/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
                     'stn_lat_AAo','stn_lon_AAo','I_AAo','J_AAo','sat_lat_AAo','sat_lon_AAo','I_sat_AAo','J_sat_AAo','-append');
                 end
 			elseif region == 6
@@ -219,7 +221,7 @@ for windowsize = [31 61 91]
                         [stn_lat_SoA(m,:),idx] = datasample(I_SoA,NUM_STNS,'Replace',false);
                         stn_lon_SoA(m,:) = J_SoA(idx);
                     end
-                    save(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
+                    save(['Proxies/NoENSO/',num2str(windowsize),'yrWindow/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
                     'stn_lat_SoA','stn_lon_SoA','I_SoA','J_SoA','-append');	
                 end
 				for NUM_STNS = 1:sat_min(floor(windowsize/30),6)
@@ -228,7 +230,7 @@ for windowsize = [31 61 91]
                         [sat_lat_SoA(m,:),idx] = datasample(I_sat_SoA,NUM_STNS,'Replace',false);
                         sat_lon_SoA(m,:) = J_sat_SoA(idx);
                     end
-                    save(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
+                    save(['Proxies/NoENSO/',num2str(windowsize),'yrWindow/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat'], ...
                     'sat_lat_SoA','sat_lon_SoA','I_sat_SoA','J_sat_SoA','-append');	
                 end
             end
@@ -237,9 +239,6 @@ for windowsize = [31 61 91]
   end
 windowsize
 end
-
-
- 
  
  
  

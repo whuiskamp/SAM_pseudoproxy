@@ -19,8 +19,8 @@ tic;
 load DataFiles/model_output.mat
 load site_range.mat
 
-for windowsize = [31] % The running window in years
-    for region = [1]
+for windowsize = [31]; % The running window in years
+    for region = [1 2 3 4 5 6]
 %% Loading proxies
     DIR_NAME = ['Proxies/NoResample/',num2str(windowsize),'yrWindow'];
      % script fails at 1, it is noted in the script what to change if you only want one site
@@ -41,7 +41,7 @@ for windowsize = [31] % The running window in years
 			for NUM_STNS = numstnstocompare
 
 				all_stn_precip=zeros(NUM_TRIALS,NUM_STNS,NUM_YRS);
-                load([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat']);
+                load([DIR_NAME,'/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat']);
             
 % Select region for analysis: 1 = Global (SH really), 2 = South America only, 3 = Australia + New Zealand, 4 = SH without Antarctica
 % 5 = Antarctica only, 6 = South Africa only
@@ -87,7 +87,7 @@ for windowsize = [31] % The running window in years
 %% Esper et al 2005 CPS Method
 
                 for n=1:NUM_TRIALS
-					corr_matrix = corr(SAM(CAL_WDW(c,:))'*ones(1,NUM_STNS), squeeze(all_stn_precip(n,:,CAL_WDW(c,:)))'); % If you want to calculate for one site, change NUM_STNS manually and run this last bit once more.
+					corr_matrix = corr(SAM(CAL_WDW(c,:))*ones(1,NUM_STNS), squeeze(all_stn_precip(n,:,CAL_WDW(c,:)))'); % If you want to calculate for one site, change NUM_STNS manually and run this last bit once more.
 					stn_CPS(n,:) = corr_matrix(1,:)*squeeze(all_stn_precip(n,:,:));
                 end
 
@@ -98,8 +98,8 @@ for windowsize = [31] % The running window in years
 
 % Skill Evaluation
 				for n=1:NUM_TRIALS
-					stn_corr_CPS(n) = single(corr(squeeze(stn_CPS(n,:)'),SAM'));
-					stn_rmse_CPS(n) = single(sqrt(mean((SAM-squeeze(stn_CPS(n,:))).^2)));
+					stn_corr_CPS(n) = single(corr(squeeze(stn_CPS(n,:)'),SAM));
+					stn_rmse_CPS(n) = single(sqrt(mean((SAM'-squeeze(stn_CPS(n,:))).^2)));
                 end
 
 				all_stn_CPS(NUM_STNS,:,:) = stn_CPS;
@@ -113,7 +113,7 @@ for windowsize = [31] % The running window in years
             end
 			for NUM_STNS = numstnstocompare
                 all_stn_sat=zeros(NUM_TRIALS,NUM_STNS,NUM_YRS);
-				load([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat']);
+				load([DIR_NAME,'/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/',num2str(NUM_STNS),'stns_1000prox.mat']);
             
 % Select region for analysis: 1 = Global (SH really), 2 = South America only, 3 = Australia + New Zealand, 4 = SH without Antarctica
 % 5 = Antarctica only, 6 = South Africa only
@@ -160,7 +160,7 @@ for windowsize = [31] % The running window in years
 %% Esper et al 2005 CPS Method
 
                 for n=1:NUM_TRIALS
-                    corr_matrix_sat = corr(SAM(CAL_WDW(c,:))'*ones(1,NUM_STNS), squeeze(all_stn_sat(n,:,CAL_WDW(c,:)))');
+                    corr_matrix_sat = corr(SAM(CAL_WDW(c,:))*ones(1,NUM_STNS), squeeze(all_stn_sat(n,:,CAL_WDW(c,:)))');
 					sat_CPS(n,:) = corr_matrix_sat(1,:)*squeeze(all_stn_sat(n,:,:));
 				end
 
@@ -171,8 +171,8 @@ for windowsize = [31] % The running window in years
 
 % Skill Evaluation
 				for n=1:NUM_TRIALS
-                    sat_corr_CPS(n) = single(corr(squeeze(sat_CPS(n,:)'),SAM'));
-					sat_rmse_CPS(n) = single(sqrt(mean((SAM-squeeze(sat_CPS(n,:))).^2)));
+                    sat_corr_CPS(n) = single(corr(squeeze(sat_CPS(n,:)'),SAM));
+					sat_rmse_CPS(n) = single(sqrt(mean((SAM'-squeeze(sat_CPS(n,:))).^2)));
 				end
                 
                 all_sat_CPS(NUM_STNS,:,:) = sat_CPS;
@@ -182,7 +182,7 @@ for windowsize = [31] % The running window in years
             
 % Save each region to file
 			if region == 1
-				save([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
+				save([DIR_NAME,'/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
 				'all_stn_CPS','all_stn_corr_CPS','all_stn_rmse_CPS','all_sat_CPS','all_sat_corr_CPS','all_sat_rmse_CPS');
 			elseif region == 2
 				all_stn_CPS_SA = all_stn_CPS;
@@ -191,7 +191,7 @@ for windowsize = [31] % The running window in years
                 all_sat_CPS_SA = all_sat_CPS;
 				all_sat_corr_CPS_SA = all_sat_corr_CPS;
 				all_sat_rmse_CPS_SA = all_sat_rmse_CPS;
-				save([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
+				save([DIR_NAME,'/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
 				'all_stn_CPS_SA','all_stn_corr_CPS_SA','all_stn_rmse_CPS_SA','all_sat_CPS_SA','all_sat_corr_CPS_SA','all_sat_rmse_CPS_SA','-append');
 			elseif region == 3
 				all_stn_CPS_AuNz = all_stn_CPS;
@@ -200,7 +200,7 @@ for windowsize = [31] % The running window in years
                 all_sat_CPS_AuNz = all_sat_CPS;
 				all_sat_corr_CPS_AuNz = all_sat_corr_CPS;
 				all_sat_rmse_CPS_AuNz = all_sat_rmse_CPS;
-				save([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
+				save([DIR_NAME,'/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
 				'all_stn_CPS_AuNz','all_stn_corr_CPS_AuNz','all_stn_rmse_CPS_AuNz','all_sat_CPS_AuNz','all_sat_corr_CPS_AuNz','all_sat_rmse_CPS_AuNz','-append');
 			elseif region == 4
 				all_stn_CPS_AA = all_stn_CPS;
@@ -209,7 +209,7 @@ for windowsize = [31] % The running window in years
                 all_sat_CPS_AA = all_sat_CPS;
 				all_sat_corr_CPS_AA = all_sat_corr_CPS;
 				all_sat_rmse_CPS_AA = all_sat_rmse_CPS;
-				save([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
+				save([DIR_NAME,'/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
 				'all_stn_CPS_AA','all_stn_corr_CPS_AA','all_stn_rmse_CPS_AA','all_sat_CPS_AA','all_sat_corr_CPS_AA','all_sat_rmse_CPS_AA','-append');
 			elseif region == 5
 				all_stn_CPS_AAo = all_stn_CPS;
@@ -218,7 +218,7 @@ for windowsize = [31] % The running window in years
                 all_sat_CPS_AAo = all_sat_CPS;
 				all_sat_corr_CPS_AAo = all_sat_corr_CPS;
 				all_sat_rmse_CPS_AAo = all_sat_rmse_CPS;
-				save([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
+				save([DIR_NAME,'/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
 				'all_stn_CPS_AAo','all_stn_corr_CPS_AAo','all_stn_rmse_CPS_AAo','all_sat_CPS_AAo','all_sat_corr_CPS_AAo','all_sat_rmse_CPS_AAo','-append');
 			elseif region == 6
 				all_stn_CPS_SoA = all_stn_CPS;
@@ -227,7 +227,7 @@ for windowsize = [31] % The running window in years
                 all_sat_CPS_SoA = all_sat_CPS;
 				all_sat_corr_CPS_SoA = all_sat_corr_CPS;
 				all_sat_rmse_CPS_SoA = all_sat_rmse_CPS;
-				save([DIR_NAME,'/CalWdw:',num2str(CAL_WDW(c,1)),'-',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
+				save([DIR_NAME,'/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
 				'all_stn_CPS_SoA','all_stn_corr_CPS_SoA','all_stn_rmse_CPS_SoA','all_sat_CPS_SoA','all_sat_corr_CPS_SoA','all_sat_rmse_CPS_SoA','-append');	
             end
             clear all_stn_CPS all_stn_corr_CPS all_stn_rmse_CPS all_sat_CPS all_sat_corr_CPS all_sat_rmse_CPS

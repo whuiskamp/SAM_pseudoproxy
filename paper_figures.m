@@ -1,34 +1,16 @@
 %% 1 Model and Reanalysis SAM/climatologies correlations
 
 clear
-% First the model data
-load('DataFiles/model_output.mat','SAM','sat_detr','precip_detr','lat','lon')
-era_sat = ncread('../../ERA-Interim/era_int_SAT_precip_Annmean.nc','t2m');
-era_precip = ncread('../../ERA-Interim/era_int_SAT_precip_Annmean.nc','tp');
-lat_era = double(ncread('../../ERA-Interim/era_int_SAT_precip_Annmean.nc','latitude'));
-lon_era = double(ncread('../../ERA-Interim/era_int_SAT_precip_Annmean.nc','longitude'));
-load('marshall_SAM.mat') % Ann, Aut, Win, Spr, Sum
-levels = -1:0.1:1;
-levels_n = -1:0.1:-0.3;
-levels_p = 0.3:0.1:1;
-
-for i = 1:size(sat_detr,2)
-    for j = 1:size(sat_detr,3)
-        model_SAT_corr(i,j) = double(corr(SAM',squeeze(sat_detr(:,i,j))));
-        model_pre_corr(i,j) = double(corr(SAM',squeeze(precip_detr(:,i,j))));
-    end
-end
-
-% Correlate ERA-Interim with Marshall SAM over period 1979-2015
-
-for i = 1:size(era_sat,1)
-    for j = 1:size(era_sat,2)
-        era_sat_corr(i,j) = corr(Marshall_SAM(23:58,2),squeeze(era_sat(i,j,1:36)));
-        era_precip_corr(i,j) = corr(Marshall_SAM(23:58,2),squeeze(era_precip(i,j,1:36)));
-    end
-end
-
-for i = 1:4
+load('DataFiles/model_output.mat','lat','lon')
+load('DataFiles/SAM_corrs.mat','model_SAT_corr','model_pre_corr')
+model_SAT_corr = double(model_SAT_corr); model_pre_corr = double(model_pre_corr);
+load('DataFiles/GISS_corrs.mat')
+load('DataFiles/GISS_model_output.mat')
+load('model_fit.mat')
+irange = 144;
+jrange = 45;
+% land = ncread('DataFiles/sftlf_A1.static.nc','sftlf');
+for i = 1:2
     figure(i)
     axesm('MapProjection','pcarree','MapLatLimit',[-90 -0],'maplonlim',[0 360])
     framem;
@@ -38,87 +20,53 @@ for i = 1:4
     tightmap
 end
 
+levels = -1:0.1:1;
+levels_n = -1:0.1:-0.3;
+levels_p = 0.3:0.1:1;
+
 % model SAT
 figure(1)
 contourfm(lat(1:45),lon,model_SAT_corr(1:45,:),levels,'linestyle','none')
 hold on;
-contourm(lat(1:45),lon,model_SAT_corr(1:45,:),levels_n,'color','k')
-contourm(lat(1:45),lon,model_SAT_corr(1:45,:),levels_p,'color','k')
 colormap(b2r(-1,1))
+for j = 1:jrange
+    for i = 1:irange
+        if CM2_fit_sat(i,j) ~= 1
+            scatterm(lat(j),lon(i),6,CM2_fit_sat(i,j),'k','filled')
+        %else
+        %    scatterm(lat(j),lon(i),6,CM2_fit_sat(i,j),'g','filled')
+        end
+    end
+end
 
 % model Precip
 figure(2)
 contourfm(lat(1:45),lon,model_pre_corr(1:45,:),levels,'linestyle','none')
 hold on;
-contourm(lat(1:45),lon,model_pre_corr(1:45,:),levels_n,'color','k')
-contourm(lat(1:45),lon,model_pre_corr(1:45,:),levels_p,'color','k')
 colormap(b2r(-1,1))
-
-% ERA-Int SAT
-figure(3)
-contourfm(lat_era,lon_era,era_sat_corr',levels,'linestyle','none')
-hold on;
-contourm(lat_era,lon_era,era_sat_corr',levels_n,'color','k')
-contourm(lat_era,lon_era,era_sat_corr',levels_p,'color','k')
-colormap(b2r(-1,1))
-
-% ERA-Int precip
-figure(4)
-contourfm(lat_era,lon_era,era_pre_corr',levels,'linestyle','none')
-hold on;
-contourm(lat_era,lon_era,era_pre_corr',levels_n,'color','k')
-contourm(lat_era,lon_era,era_pre_corr',levels_p,'color','k')
-colormap(b2r(-1,1))
-
-for i = 1:4
-    figure(i)
-    load coast
-    plotm(lat,long,'k')
+for i = 1:irange
+    for j = 1:jrange
+        if CM2_fit_pre(i,j) ~= 1
+            scatterm(lat(j),lon(i),6,CM2_fit_pre(i,j),'k','filled')
+        %else
+        %    scatterm(lat(j),lon(i),6,CM2_fit_pre(i,j),'g','filled')
+        end
+    end
 end
 
-%% Run this part once to save output
-land = ncread('DataFiles/sftlf_A1.static.nc','sftlf')';
-%save('DataFiles/SAM_corrs.mat','model_SAT_corr','model_pre_corr')
-model_SAT_corr(isnan(land)) = nan; model_pre_corr(isnan(land)) = nan;
-model_SAT_corr_land = model_SAT_corr; model_pre_corr_land = model_pre_corr;
-%save('DataFiles/SAM_corrs.mat','model_SAT_corr_land','model_pre_corr_land','-append')
+for i = 1:2
+    figure(i)
+    load coast
+    plotm(lat,long,'k','linewidth',2)
+end
 
-% Save to netcdf
-load('DataFiles/model_output.mat','lat','lon')
-% model SAT land corr
-nccreate('DataFiles/SAM_corrs.nc','SAM_SAT_land_model','Datatype','single','Dimensions',...
-{'latitude',45,'longitude',144},'Format','classic')
-ncwrite('DataFiles/SAM_corrs.nc','SAM_SAT_land_model',model_SAT_corr_land(1:45,1:144))
-% model precip land corr
-nccreate('DataFiles/SAM_corrs.nc','SAM_pre_land_model','Datatype','single','Dimensions',...
-{'latitude',45,'longitude',144},'Format','classic')
-ncwrite('DataFiles/SAM_corrs.nc','SAM_pre_land_model',model_pre_corr_land(1:45,1:144))
-% model SAT corr
-nccreate('DataFiles/SAM_corrs.nc','SAM_SAT_model','Datatype','single','Dimensions',...
-{'latitude',45,'longitude',144},'Format','classic')
-ncwrite('DataFiles/SAM_corrs.nc','SAM_SAT_model',model_SAT_corr(1:45,1:144))
-% model precip corr
-nccreate('DataFiles/SAM_corrs.nc','SAM_pre_model','Datatype','single','Dimensions',...
-{'latitude',45,'longitude',144},'Format','classic')
-ncwrite('DataFiles/SAM_corrs.nc','SAM_pre_model',model_pre_corr(1:45,1:144))
-
-nccreate('DataFiles/SAM_corrs.nc','latitude','Dimensions',...
-    {'latitude',45},'Format','classic')
-nccreate('DataFiles/SAM_corrs.nc','longitude','Dimensions',...
-    {'longitude',144},'Format','classic')
-
-ncwrite('DataFiles/SAM_corrs.nc','latitude',lat(1:45,1))
-ncwrite('DataFiles/SAM_corrs.nc','longitude',lon(1:144,1))
-ncwriteatt('DataFiles/SAM_corrs.nc','latitude','axis','Y')
-ncwriteatt('DataFiles/SAM_corrs.nc','longitude','axis','X')
-
-ncwriteatt('DataFiles/SAM_corrs.nc','latitude','axis','Y')
-ncwriteatt('DataFiles/SAM_corrs.nc','latitude','standard_name','latitude')
-ncwriteatt('DataFiles/SAM_corrs.nc','latitude','units','degrees_north')
-
-ncwriteatt('DataFiles/SAM_corrs.nc','longitude','axis','Y')
-ncwriteatt('DataFiles/SAM_corrs.nc','longitude','standard_name','longitude')
-ncwriteatt('DataFiles/SAM_corrs.nc','longitude','units','degrees_east')
+figure(1)
+print('CM2p1_sat_fit.pdf','-dpdf','-painters')%,'-bestfit')
+figure(2)
+print('CM2p1_precip_fit.pdf','-dpdf','-painters')%,'-bestfit')
+% What % of sites fit within the model range?
+% Total # of SH land cells  = 2241 
+num_land = sum(sum(~isnan(land(:,1:45))));
 
 %% Figure 2 - Apparent vs. true correlation percentiles
 
@@ -869,24 +817,25 @@ end
 %% Figure 6  Nonstationary cells 
 
 clear
-load('DataFiles/nonstat_map_31yrwdw.mat') % Change for each window size
+wdwsize = 61;
+load(['DataFiles/nonstat_map_',num2str(wdwsize),'yrwdw.mat']) % Change for each window size
 load('DataFiles/model_output.mat')
 levels = 10;
-levels_sig = 50:10:100;
+levels_sig = [47 60 70 80 90 100; 44 60 70 80 90 100; 41 60 70 80 90 100];
 
 for i = 1:2
     figure(i)
     axesm('MapProjection','stereo','origin',[-90,0],'MapLatLimit',[-90 0])
     framem
     gridm
-    mlabel
+    %mlabel  % commented out - we add our own labels later
     tightmap
 end
 
 figure(1)
 contourfm(lat,lon,nonstat_precipmap,'linestyle','none');
 hold on
-contourm(lat,lon,nonstat_precipmap,levels_sig,'color','k')
+contourm(lat,lon,nonstat_precipmap,levels_sig(floor(wdwsize/30),:),'color','k')
 colorbar;
 caxis([0, 100]);
 colormap(flipud(hot(levels)));
@@ -894,7 +843,7 @@ colormap(flipud(hot(levels)));
 figure(2)
 contourfm(lat,lon,nonstat_satmap,'linestyle','none');
 hold on
-contourm(lat,lon,nonstat_satmap,levels_sig,'color','k')
+contourm(lat,lon,nonstat_satmap,levels_sig(floor(wdwsize/30),:),'color','k')
 colorbar;
 caxis([0, 100]);
 colormap(flipud(hot(levels)));
@@ -902,9 +851,168 @@ colormap(flipud(hot(levels)));
 load coast
 for i=1:2
     figure(i)
-    plotm(lat,long,'k')
+    plotm(lat,long,'k','linewidth',2)
 end
-%% Figure 7 Probability of inclusion of non-stationary stations
+
+figure(1);print(['nonstat_precipmap',num2str(wdwsize),'yrwdw.pdf'],'-dpdf','-painters')
+figure(2);print(['nonstat_SATmap',num2str(wdwsize),'yrwdw.pdf'],'-dpdf','-painters')
+
+
+%% Figure 7 Impact of non-stationary sites
+
+clear all
+NUM_YRS = 500;
+num_prox = 70;
+NUM_CAL_WDW = 10;
+nstat_corrs = nan(3,2,69); % windows, vars, network size
+regr_slopes = nan(3,2,69);
+for windowsize = [31 61 91]
+    for group_size = 2:num_prox
+        clear CAL_WDW; overlap = ceil(-(NUM_YRS-NUM_CAL_WDW*windowsize)/9.0);
+        for c = 0:9
+            CAL_WDW(c+1,:) = (1+c*(windowsize-overlap)):((c*(windowsize-overlap))+windowsize);
+        end
+        for c = 1:size(CAL_WDW,1)
+            load(['Proxies/NoResample/',num2str(windowsize),'yrWindow/CalWdw',num2str(CAL_WDW(c,1)),'_',num2str(CAL_WDW(c,end)),'/tonsofstats.mat'],...
+                'all_sat_corr_CPS','all_stn_corr_CPS')
+            sat_rvals(c,:) = all_sat_corr_CPS(group_size,:);
+            stn_rvals(c,:) = all_stn_corr_CPS(group_size,:);
+        end
+        load(['DataFiles/num_nstat',num2str(windowsize),'yrWdw_',num2str(group_size),'prox.mat'])
+        sat_r = reshape(sat_rvals,1,10*1000);
+        pre_r = reshape(stn_rvals,1,10*1000);
+        nstat_sat = reshape(nstat_nstns_sat,1,10*1000)./group_size;
+        nstat_pre = reshape(nstat_nstns_pre,1,10*1000)./group_size;
+        [Rs1 Ps1] = corrcoef(sat_r,nstat_sat);
+        [Rs2 Ps2] = corrcoef(pre_r,nstat_pre);
+        nstat_corrs(floor(windowsize/30),1,group_size) = Rs1(1,2); nstat_Ps(floor(windowsize/30),1,group_size) = Ps1(1,2);
+        nstat_corrs(floor(windowsize/30),2,group_size) = Rs2(1,2); nstat_Ps(floor(windowsize/30),2,group_size) = Ps2(1,2);
+        p_sat = polyfit(sat_r,nstat_sat,1); p_pre = polyfit(pre_r,nstat_pre,1);
+        regr_slopes(floor(windowsize/30),1,group_size) = p_sat(1);
+        regr_slopes(floor(windowsize/30),2,group_size) = p_pre(1);
+    end
+end
+        
+figure(1)
+subplot(1,2,1)
+hold on 
+grid on
+% SAT
+plot(squeeze(nstat_corrs(1,1,:)),'o','color',[0, 0.4470, 0.7410],'MarkerFaceColor',[0, 0.4470, 0.7410],'markersize',3,'linestyle','-','linewidth',2)
+plot(squeeze(nstat_corrs(2,1,:)),'o','color',[0.8500, 0.3250, 0.0980],'MarkerFaceColor',[0.8500, 0.3250, 0.0980],'markersize',3,'linestyle','-','linewidth',2)
+plot(squeeze(nstat_corrs(3,1,:)),'o','color',[0.9290, 0.6940, 0.1250],'MarkerFaceColor',[0.9290, 0.6940, 0.1250],'markersize',3,'linestyle','-','linewidth',2)     
+% Precip
+plot(squeeze(nstat_corrs(1,2,:)),'o','color',[0.4940, 0.1840, 0.5560],'MarkerFaceColor',[0.4940, 0.1840, 0.5560],'markersize',3,'linestyle','-','linewidth',2)
+plot(squeeze(nstat_corrs(2,2,:)),'o','color',[0.4660, 0.6740, 0.1880],'MarkerFaceColor',[0.4660, 0.6740, 0.1880],'markersize',3,'linestyle','-','linewidth',2)
+plot(squeeze(nstat_corrs(3,2,:)),'o','color',[0.3010, 0.7450, 0.9330],'MarkerFaceColor',[0.3010, 0.7450, 0.9330],'markersize',3,'linestyle','-','linewidth',2)
+line([0 70],[0 0],'linestyle','--','color','k') % 0 line
+line([0 70],[-0.02 -0.02],'color','r'); line([0 70],[0.027 0.027],'color','r') % region where corrs are not significant at p < 0.05
+legend('SAT-31yrWdw','SAT-61yrWdw','SAT-91yrWdw','Pre-31yrWdw','Pre-61yrWdw','Pre-91yrWdw')
+xlabel('Network Size'); ylabel('r');
+
+% Plot regression slopes...
+subplot(1,2,2)
+hold on 
+grid on
+% SAT
+plot(squeeze(regr_slopes(1,1,:)),'o','color',[0, 0.4470, 0.7410],'MarkerFaceColor',[0, 0.4470, 0.7410],'markersize',3,'linestyle','-','linewidth',2)
+plot(squeeze(regr_slopes(2,1,:)),'o','color',[0.8500, 0.3250, 0.0980],'MarkerFaceColor',[0.8500, 0.3250, 0.0980],'markersize',3,'linestyle','-','linewidth',2)
+plot(squeeze(regr_slopes(3,1,:)),'o','color',[0.9290, 0.6940, 0.1250],'MarkerFaceColor',[0.9290, 0.6940, 0.1250],'markersize',3,'linestyle','-','linewidth',2)     
+% Precip
+plot(squeeze(regr_slopes(1,2,:)),'o','color',[0.4940, 0.1840, 0.5560],'MarkerFaceColor',[0.4940, 0.1840, 0.5560],'markersize',3,'linestyle','-','linewidth',2)
+plot(squeeze(regr_slopes(2,2,:)),'o','color',[0.4660, 0.6740, 0.1880],'MarkerFaceColor',[0.4660, 0.6740, 0.1880],'markersize',3,'linestyle','-','linewidth',2)
+plot(squeeze(regr_slopes(3,2,:)),'o','color',[0.3010, 0.7450, 0.9330],'MarkerFaceColor',[0.3010, 0.7450, 0.9330],'markersize',3,'linestyle','-','linewidth',2)
+line([0 70],[0 0],'linestyle','--','color','k') % 0 line
+line([0 70],[-0.02 -0.02],'color','r'); line([0 70],[0.027 0.027],'color','r') % region where corrs are not significant at p < 0.05
+ylabel('regression slope');
+
+
+print('nonstat_impact.pdf','-dpdf','-painters')%,'-bestfit')
+
+
+%% Figure 8
+% This figure is made in python using the script std_corr.py
+
+%% Figures 9 and 10
+% These figures are made in python, using the script ENSO_plotting.py
+
+%% Figure 11
+
+clear
+load('DataFiles/ENSO_corrs.mat','SAT_corr_sig','pre_corr_sig')
+load('DataFiles/ENSO_regression.mat','n34_SAT_regr','n34_pre_regr')
+load('DataFiles/SAM_corrs.mat','model_pre_corr_land','model_SAT_corr_land')
+land = ncread('DataFiles/sftlf_A1.static.nc','sftlf')';
+
+figure(1)
+% SAT
+nonsig_count = zeros(3);
+for w = [1 2 3]
+    subplot(2,3,w)
+    hold on
+    xlabel('SAM-SAT r')
+    ylabel('n34-SAM/SAT running corr regr. coeff')
+    for i = 1:size(SAT_corr_sig,2)
+        for j = 1:size(SAT_corr_sig,3)
+            if isnan(SAT_corr_sig(w,i,j)) && ~isnan(land(i,j))  % Plot non-significant correlations first
+                scatter(abs(model_SAT_corr_land(i,j)),abs(n34_SAT_regr(w,i,j)),'filled','MarkerFaceColor','b','MarkerEdgeColor','k')
+                nonsig_count(w,1) = nonsig_count(w,1) + 1;
+            end           
+        end
+    end
+end
+% To make sure significant corrs are not covered, we need a separate
+% loop...
+sig_count = zeros(3);
+for w = [1 2 3]
+    subplot(2,3,w)
+    for i = 1:size(SAT_corr_sig,2)
+        for j = 1:size(SAT_corr_sig,3)
+            if ~isnan(SAT_corr_sig(w,i,j)) && ~isnan(land(i,j))  % Plot non-significant correlations first
+                scatter(abs(model_SAT_corr_land(i,j)),abs(n34_SAT_regr(w,i,j)),'filled','MarkerFaceColor','r','MarkerEdgeColor','k')
+                sig_count(w,1) = sig_count(w,1) + 1;
+            end           
+        end
+    end
+end
+pcnt_sig_SAT = sig_count./(nonsig_count+sig_count);
+
+% Precip
+nonsig_count = zeros(3);
+for w = [1 2 3]
+    subplot(2,3,w+3)
+    hold on
+    xlabel('SAM-precip r')
+    ylabel('n34-SAM/precip running corr regr. coeff')
+    for i = 1:size(pre_corr_sig,2)
+        for j = 1:size(pre_corr_sig,3)
+            if isnan(pre_corr_sig(w,i,j)) && ~isnan(land(i,j))
+                scatter(abs(model_pre_corr_land(i,j)),abs(n34_pre_regr(w,i,j)),'filled','MarkerFaceColor','b','MarkerEdgeColor','k')
+                nonsig_count(w,1) = nonsig_count(w,1) + 1;
+            end           
+        end
+    end
+end
+sig_count = zeros(3);
+for w = [1 2 3]
+    subplot(2,3,w+3)
+    hold on
+    for i = 1:size(pre_corr_sig,2)
+        for j = 1:size(pre_corr_sig,3)
+            if ~isnan(pre_corr_sig(w,i,j)) && ~isnan(land(i,j))
+                scatter(abs(model_pre_corr_land(i,j)),abs(n34_pre_regr(w,i,j)),'filled','MarkerFaceColor','r','MarkerEdgeColor','k')
+                sig_count(w,1) = sig_count(w,1) + 1;
+            end           
+        end
+    end
+end
+pcnt_sig_precip = sig_count./(nonsig_count+sig_count);
+
+h=gcf;
+set(h,'PaperOrientation','landscape');
+print(gcf,'figures/zscoreENSO_regr_SAM_r_scatter_2','-dpdf','-painters','-bestfit')
+
+%% Figure A1 Probability of inclusion of non-stationary stations
 % SAT
 NUM_YRS = 500;
 NUM_TRIALS = 1000;
@@ -1040,84 +1148,44 @@ set(gcf, 'PaperPosition', [0 0 12 12]); %x_width=19cm y_width=28cm
 set(gcf, 'PaperSize', [18 14]);
 end
 
-%% Figure 8
-% This figure is made in python using the script std_corr.py
+%% Figure A2
 
-%% Figures 9 and 10
-% These figures are made in python, using the script ENSO_plotting.py
-
-%% Figure 11
-
-clear
-load('DataFiles/ENSO_corrs.mat','SAT_corr_sig','pre_corr_sig')
-load('DataFiles/ENSO_regression.mat','n34_SAT_regr','n34_pre_regr')
-load('DataFiles/SAM_corrs.mat','model_pre_corr_land','model_SAT_corr_land')
-land = ncread('DataFiles/sftlf_A1.static.nc','sftlf')';
+clear all
 
 figure(1)
-% SAT
-nonsig_count = zeros(3);
-for w = [1 2 3]
-    subplot(2,3,w)
+for windowsize = [31 61 91]
+    load(['RMSE_',num2str(windowsize),'yrWdw_recons.mat'])
+    subplot(3,3,floor(windowsize/30))
+    grid on
     hold on
-    xlabel('SAM-SAT r')
-    ylabel('n34-SAM/SAT running corr regr. coeff')
-    for i = 1:size(SAT_corr_sig,2)
-        for j = 1:size(SAT_corr_sig,3)
-            if isnan(SAT_corr_sig(w,i,j)) && ~isnan(land(i,j))  % Plot non-significant correlations first
-                scatter(abs(model_SAT_corr_land(i,j)),abs(n34_SAT_regr(w,i,j)),'filled','MarkerFaceColor','b','MarkerEdgeColor','k')
-                nonsig_count(w,1) = nonsig_count(w,1) + 1;
-            end           
-        end
-    end
+    h1 = plot(rmse_sat_SH_M(2:70),'linewidth',1.5);
+    %h2 = plot(rmse_sat_AA_M(2:70),'linewidth',1.5);
+    h3 = plot(rmse_sat_AAo_M(2:70),'linewidth',1.5);
+    h4 = plot(rmse_sat_AuNz_M(2:70),'linewidth',1.5);
+    h5 = plot(rmse_sat_SA_M(2:70),'linewidth',1.5);
+    xlim([0 70]); ylim([0.88 1])
+    leg = legend([h1 h3 h4 h5],...
+        'SH','AA only','AuNz','SA');
 end
-% To make sure significant corrs are not covered, we need a separate
-% loop...
-sig_count = zeros(3);
-for w = [1 2 3]
-    subplot(2,3,w)
-    for i = 1:size(SAT_corr_sig,2)
-        for j = 1:size(SAT_corr_sig,3)
-            if ~isnan(SAT_corr_sig(w,i,j)) && ~isnan(land(i,j))  % Plot non-significant correlations first
-                scatter(abs(model_SAT_corr_land(i,j)),abs(n34_SAT_regr(w,i,j)),'filled','MarkerFaceColor','r','MarkerEdgeColor','k')
-                sig_count(w,1) = sig_count(w,1) + 1;
-            end           
-        end
-    end
+for windowsize = [31 61 91]
+    load(['RMSE_',num2str(windowsize),'yrWdw_recons.mat'])
+    subplot(3,3,floor(windowsize/30)+3)
+    grid on
+    hold on
+    h6 = plot(rmse_stn_SH_M(2:70),'linewidth',1.5);
+    %h7 = plot(rmse_stn_AA_M(2:70),'linewidth',1.5);
+    h8 = plot(rmse_stn_AAo_M(2:70),'linewidth',1.5);
+    h9 = plot(rmse_stn_AuNz_M(2:70),'linewidth',1.5);
+    h10 = plot(rmse_stn_SA_M(2:70),'linewidth',1.5);
+    xlim([0 70]); ylim([0.88 1])
+    leg = legend([h6 h8 h9 h10],...
+        'SH','AA only','AuNz','SA');
 end
-pcnt_sig_SAT = sig_count./(nonsig_count+sig_count);
+subplot(3,3,1); ylabel('RMSE')
+subplot(3,3,4); ylabel('RMSE')
+    
+subplot(3,3,5); xlabel('Number of proxies');     
+    
+subplot(3,3,2); title('SAT'); subplot(3,3,5); title('Precip.');  
 
-% Precip
-nonsig_count = zeros(3);
-for w = [1 2 3]
-    subplot(2,3,w+3)
-    hold on
-    xlabel('SAM-precip r')
-    ylabel('n34-SAM/precip running corr regr. coeff')
-    for i = 1:size(pre_corr_sig,2)
-        for j = 1:size(pre_corr_sig,3)
-            if isnan(pre_corr_sig(w,i,j)) && ~isnan(land(i,j))
-                scatter(abs(model_pre_corr_land(i,j)),abs(n34_pre_regr(w,i,j)),'filled','MarkerFaceColor','b','MarkerEdgeColor','k')
-                nonsig_count(w,1) = nonsig_count(w,1) + 1;
-            end           
-        end
-    end
-end
-sig_count = zeros(3);
-for w = [1 2 3]
-    subplot(2,3,w+3)
-    hold on
-    for i = 1:size(pre_corr_sig,2)
-        for j = 1:size(pre_corr_sig,3)
-            if ~isnan(pre_corr_sig(w,i,j)) && ~isnan(land(i,j))
-                scatter(abs(model_pre_corr_land(i,j)),abs(n34_pre_regr(w,i,j)),'filled','MarkerFaceColor','r','MarkerEdgeColor','k')
-                sig_count(w,1) = sig_count(w,1) + 1;
-            end           
-        end
-    end
-end
-pcnt_sig_precip = sig_count./(nonsig_count+sig_count);
-
-h=gcf;
-set(h,'PaperOrientation','landscape');
-print(gcf,'figures/zscoreENSO_regr_SAM_r_scatter_2','-dpdf','-painters','-bestfit')
+print('RMSE.pdf','-dpdf','-painters')    
